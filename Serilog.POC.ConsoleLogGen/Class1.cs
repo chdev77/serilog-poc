@@ -6,10 +6,7 @@ using System.Threading.Tasks;
 
 namespace Serilog.POC.ConsoleLogGen
 {
-    class Program
+    class Class1
     {
-        static void Main(string[] args)
-        {
-        }
     }
 }
