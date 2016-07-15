@@ -57,18 +57,26 @@ namespace Serilog.POC.ConsoleLogGen
             var db = client.GetDatabase("LibraryDb2");
             var collection = db.GetCollection<BookStore>("BookStore");
 
-            for (int i = 0; i < 10000; i++)
+            //10,000,000 inserts
+            Parallel.For(0, 10, i =>
             {
-                BookStore bookStore = new BookStore
+                for (int j = 0; j < 10000; j++)
                 {
-                    BookTitle = $"MongoDB Basics_2{i}",
-                    ISBN = $"8767687689898yu2{i}",
-                    Auther = $"Tanya 2{i}",
-                    Category = "NoSQL DBMS"
-                };
+                    for (int k = 0; k < 100; k++)
+                    {
+                        BookStore bookStore = new BookStore
+                        {
+                            BookTitle = $"MongoDB Basics_{i}_{j}_{k}",
+                            ISBN = $"8767687689898yu2{i}_{j}_{k}",
+                            Auther = $"Tanya {i}_{j}_{k}",
+                            Category = $"{i}_{j}_{k}"
+                        };
 
-                collection.InsertOne(bookStore);
-            }
+                        collection.InsertOne(bookStore);
+                    }
+
+                }
+            }); // Parallel.For
 
 
             var tmp = 1;
