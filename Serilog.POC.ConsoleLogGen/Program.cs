@@ -4,6 +4,7 @@ using Serilog.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -18,38 +19,57 @@ namespace Serilog.POC.ConsoleLogGen
             //var template = "[{Timestamp:HH:mm:ss} {Level} {Message}{NewLine}{Exception}]";
             ////var snk = LoggerSinkConfiguration  //.LiterateConsole(Events.LogEventLevel.Verbose, template, null);
             //var log = new LoggerConfiguration()
-            //    .WriteTo.LiterateConsole()
-            //    .WriteTo.RollingFile("\\Logs\\Activity-{Date}.txt")
+            //    .WriteTo.MongoDB()
             //    .CreateLogger();
 
             //log.Information("Test");
             //Console.ReadKey();
 
-            var cert = new X509Certificate2("cert\\client-x509.pfx", "8164053997");
+            var cert = new X509Certificate2("cert\\certificate.pfx", "8164053997");
 
             var settings = new MongoClientSettings
             {
+                //SslSettings = new SslSettings
+                //{
+                //    ClientCertificates = new[] { cert },
+                //},
                 SslSettings = new SslSettings
                 {
                     ClientCertificates = new[] { cert },
+                    ServerCertificateValidationCallback = delegate (object s, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+                    {
+                        foreach (var item in chain.ChainElements)
+                        {
+                            foreach (var elemStatus in item.ChainElementStatus)
+                            {
+                                Console.WriteLine(item.Certificate.Subject + "->" + elemStatus.StatusInformation);
+                            }
+                        }
+
+                        return true; //NOT FOR PRODUCTION: this line will bypass certificate errors.
+                    }
                 },
                 UseSsl = true,
                 Server = new MongoServerAddress("mongodb.chdev77.com", 449)
             };
 
             var client = new MongoClient(settings);
-            var db = client.GetDatabase("LibraryDb");
+            var db = client.GetDatabase("LibraryDb2");
             var collection = db.GetCollection<BookStore>("BookStore");
 
-            BookStore bookStore = new BookStore
+            for (int i = 0; i < 10000; i++)
             {
-                BookTitle = "MongoDB Basics",
-                ISBN = "8767687689898yu",
-                Auther = "Tanya",
-                Category = "NoSQL DBMS"
-            };
+                BookStore bookStore = new BookStore
+                {
+                    BookTitle = $"MongoDB Basics_2{i}",
+                    ISBN = $"8767687689898yu2{i}",
+                    Auther = $"Tanya 2{i}",
+                    Category = "NoSQL DBMS"
+                };
 
-            collection.InsertOne(bookStore);
+                collection.InsertOne(bookStore);
+            }
+
 
             var tmp = 1;
 
